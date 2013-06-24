@@ -1,0 +1,291 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "resdefce.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Chinese (P.R.C.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_SHELL               ICON                    "Shell.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_FILE_EXIT
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About",                      IDM_HELP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_SHELL ACCELERATORS 
+BEGIN
+    "A",            IDM_HELP_ABOUT,         VIRTKEY, CONTROL, NOINVERT
+    "Q",            IDOK,                   VIRTKEY, CONTROL, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG  0, 0, 125, 55
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE 0x80000000L
+CAPTION "About Shell"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    ICON            IDI_SHELL,IDC_STATIC,11,17,20,20
+    LTEXT           "Shell Version 1.0",IDC_STATIC,38,10,70,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2011",IDC_STATIC,38,25,70,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 118
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 48
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""resdefce.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
+    "LANGUAGE 4, 2\r\n"
+    "#pragma code_page(936)\r\n"
+    "#include ""Shell.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_APP_TITLE           "Shell"
+    IDC_SHELL               "SHELL"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_TOOLS               "Tools"
+END
+
+#endif    // Chinese (P.R.C.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_TST DIALOG  0, 0, 164, 67
+STYLE DS_SETFONT | WS_POPUP | WS_BORDER
+FONT 12, "Microsoft Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "SetTime",IDOK,93,41,50,14
+    PUSHBUTTON      "Skip",IDCANCEL,19,41,50,14
+    LTEXT           "Static",IDC_CURTIME,29,14,128,21
+END
+
+IDD_SD DIALOG  0, 0, 338, 93
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,281,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,281,24,50,14
+    CONTROL         "",IDC_SPIN_YEAR,"msctls_updown32",UDS_SETBUDDYINT | UDS_ARROWKEYS,45,31,16,27
+    CONTROL         "",IDC_SPIN_MONTH,"msctls_updown32",UDS_SETBUDDYINT | UDS_ARROWKEYS,145,34,11,27
+    CONTROL         "",IDC_SPIN_DAY,"msctls_updown32",UDS_SETBUDDYINT | UDS_ARROWKEYS,205,36,11,27
+    EDITTEXT        IDC_YEAR,19,36,23,16,ES_AUTOHSCROLL
+    EDITTEXT        IDC_MONTH,116,42,23,16,ES_AUTOHSCROLL
+    EDITTEXT        IDC_DAY,171,38,23,16,ES_AUTOHSCROLL
+END
+
+IDD_ST DIALOG  0, 0, 332, 93
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_BORDER | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "",IDC_SPIN_HOUR,"msctls_updown32",UDS_SETBUDDYINT | UDS_ARROWKEYS,45,31,16,27
+    CONTROL         "",IDC_SPIN_MIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ARROWKEYS,145,34,11,27
+    EDITTEXT        IDC_HOUR,19,36,23,16,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_MIN,116,42,23,16,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Cancel",IDCANCEL,225,34,50,14
+    DEFPUSHBUTTON   "OK",IDOK,223,16,50,14
+END
+
+IDD_SETUP DIALOG  0, 0, 281, 224
+STYLE DS_SETFONT | WS_POPUP | WS_BORDER | WS_SYSMENU
+FONT 12, "Microsoft Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,224,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,224,24,50,14
+    CONTROL         "",IDC_SPIN_LOOP,"msctls_updown32",UDS_SETBUDDYINT | UDS_ARROWKEYS,101,16,11,27
+    CONTROL         "",IDC_SPIN_OFF,"msctls_updown32",UDS_SETBUDDYINT | UDS_ARROWKEYS,102,48,11,27
+    EDITTEXT        IDC_LOOP,78,21,23,16,ES_AUTOHSCROLL
+    EDITTEXT        IDC_OFF,79,53,23,16,ES_AUTOHSCROLL
+    CONTROL         "LoopAlert",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,21,47,10
+    CONTROL         "TimeToOff",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,54,43,14
+    PUSHBUTTON      "SetTime",IDC_SETTIME,24,87,50,14
+    PUSHBUTTON      "SetAlert",IDC_SETALERT,91,87,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_TST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 157
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 60
+    END
+
+    IDD_SD, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 331
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 86
+    END
+
+    IDD_ST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 325
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 86
+    END
+
+    IDD_SETUP, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 274
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 217
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "alert.bmp"
+IDB_BLUE_DATE           BITMAP                  "blue date.bmp"
+IDB_BLUE_CLOCK_FACE     BITMAP                  "blue clockface.bmp"
+IDB_BLUE_CLOCK_FACE2    BITMAP                  "blue clockface_big.bmp"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE 4, 2
+#pragma code_page(936)
+#include "Shell.rc2"  // non-Microsoft Visual C++ edited resources
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
