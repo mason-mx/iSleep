@@ -14,6 +14,7 @@ Revision History:
 #include "resource.h"
 #include "APictureViewer.h"
 #include "FullScreen.h"
+#include "UserDef.h"
 
 //
 // macro definition
@@ -50,6 +51,7 @@ void SetFilePath(wchar_t *lpwszFile);
 LRESULT OnFullScreenViewWndCreate(HWND, UINT, WPARAM, LPARAM);
 LRESULT OnFullScreenViewWndDestroy(HWND, UINT, WPARAM, LPARAM);
 LRESULT OnFullScreenViewWndPaint(HWND, UINT, WPARAM, LPARAM);
+LRESULT OnFullScreenViewWndTimer(HWND, UINT, WPARAM, LPARAM);
 LRESULT OnFullScreenViewWndLBtnDown(HWND, UINT, WPARAM, LPARAM);
 LRESULT OnFullScreenViewWndLBtnUp(HWND, UINT, WPARAM, LPARAM);
 LRESULT OnFullScreenViewWndLBtnDoubleClick(HWND, UINT, WPARAM, LPARAM);
@@ -65,6 +67,7 @@ const struct decodeUINT g_stMsg[] = {
 	WM_LBUTTONDOWN, OnFullScreenViewWndLBtnDown,
 	WM_LBUTTONUP, OnFullScreenViewWndLBtnUp,
 	WM_LBUTTONDBLCLK, OnFullScreenViewWndLBtnDoubleClick,
+	WM_TIMER,OnFullScreenViewWndTimer,
 };
 
 //
@@ -104,8 +107,8 @@ HWND CreateFullScreenViewWindow(int x, int y, int cx, int cy, HWND hWndParent, H
 		return NULL;
 	}
 
-	hWnd = CreateWindow(IDS_FULLSCREEN_CLASS, IDS_FULLSCREEN_TITLE, WS_VISIBLE/* | WS_CHILD*/, 
-		x, y, cx, cy, /*hWndParent*/NULL, NULL, hInstance, NULL);
+	hWnd = CreateWindow(IDS_FULLSCREEN_CLASS, IDS_FULLSCREEN_TITLE, WS_VISIBLE | WS_CHILD, 
+		x, y, cx, cy, hWndParent, NULL, hInstance, NULL);
 
 	ShowWindow(hWnd, SW_HIDE);
 	UpdateWindow(hWnd);
@@ -133,6 +136,7 @@ LRESULT CALLBACK FullScreenViewWndProc(HWND hWnd, UINT message, WPARAM wParam, L
 //
 LRESULT OnFullScreenViewWndCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	SetTimer(hWnd, IDT_TIMER1,5000,(TIMERPROC) NULL);
 	return 0;
 }
 
@@ -185,6 +189,33 @@ LRESULT OnFullScreenViewWndPaint(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 	EndPaint(hWnd, &ps);
 	return 0;
 }
+
+
+LRESULT OnFullScreenViewWndTimer(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (wParam) 
+	{ 
+		case IDT_TIMER1: 
+			{
+				int x = LOWORD(lParam);
+				int y = HIWORD(lParam);
+
+				RECT rcClient;
+				GetClientRect(hWnd, &rcClient);
+				if (RandomImage())
+				{
+					InvalidateRect(hWnd, &rcClient, FALSE);
+				}
+				else
+				{
+					ShowWindow(hWnd, SW_HIDE);
+				}
+			}
+			break;
+	}
+	return 0;
+}
+
 
 //
 // WM_LBUTTONDOWN

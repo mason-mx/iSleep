@@ -169,16 +169,18 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     }
 	g_hBkLight = CreateFile(L"BKL1:", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
+#if !FOR_DAMEI_VERSION
 #if USEANALOGCLOCK
 	XACRegisterClass(hInstance);	
 #else
 	TWRegisterClass(hInstance);
 #endif
 	
+	AWRegisterClass(hInstance);	
+#endif
 #if USEANALOGCLOCK
 	PVRegisterClass(hInstance);
 #endif
-	AWRegisterClass(hInstance);	
 	MediaRegisterClass(hInstance);
 	
 #if defined(WIN32_PLATFORM_PSPC) || defined(WIN32_PLATFORM_WFSP)
@@ -271,6 +273,7 @@ LRESULT DoCreateShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 	//To Hide Task bar
 	HWND hStatusBar=FindWindow(TEXT("HHTaskBar"),NULL);
 	ShowWindow(hStatusBar,SW_SHOW);
+#if !FOR_DAMEI_VERSION
 	if((IDOK == DialogBox(hInst, (LPCTSTR)IDD_TST, hWnd, (DLGPROC)TSTDlgProc))&&
 		(IDOK == DialogBox(hInst, (LPCTSTR)IDD_SD, hWnd, (DLGPROC)SDDlgProc))&&
 		(IDOK == DialogBox(hInst, (LPCTSTR)IDD_ST, hWnd, (DLGPROC)STDlgProc)))
@@ -316,18 +319,24 @@ LRESULT DoCreateShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 		g_Calendar2.SetEasterDate(FALSE);
 #endif
 	}
+#endif
 
 	ShowMediaWnd(hWnd);
 
+#if FOR_DAMEI_VERSION
+	ShowFSWnd(hWnd);
+#endif
+
+
+#if !FOR_DAMEI_VERSION
 #if USEANALOGCLOCK
 	ShowPVWnd(hWnd);
 #endif
-
 	ShowAlertWnd(hWnd);
 	SetAlert(st);
 	SetAlertIntervalLoop(30);
-	SetAlertIntervaltoOff(60);
-
+	SetAlertIntervaltoOff(60);	
+#endif
 	return 0;
 }
 
@@ -377,7 +386,7 @@ LRESULT DoPaintShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 
 LRESULT DoKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) 
 {
-	RETAILMSG(1, (TEXT("WM_KEYDOWN.......\r\n")));
+	RETAILMSG(1, (TEXT("WM_KEYDOWN.......0x%x\r\n"), wParam));
 	PlaySound(NULL, NULL, 0);
 	if((wParam != VK_F24) && (wParam != VK_ESCAPE))
 	{
@@ -388,16 +397,46 @@ LRESULT DoKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 		}
 		g_bBKLOff = FALSE;
 	}
+
+	DWORD sysvol, newvol = 0;
+	
 	switch (wParam)
 	{
 	case VK_F23:
 		//MessageBox(NULL, NULL, NULL, MB_OK);
 		//ShowFSWnd(hWnd);
 		break;
+	case VK_LEFT:
+		{
+			waveOutGetVolume(0, &sysvol);
+			newvol = (sysvol & 0xF);
+			if(newvol > 0)
+			{
+				newvol = newvol - 3;
+				newvol = (newvol << 28)|(newvol << 24)|(newvol << 20)|(newvol << 16)|(newvol << 12)|(newvol << 8)|(newvol << 4)|newvol;
+				waveOutSetVolume(0, newvol);
+				RETAILMSG(1, (TEXT("VK_LEFT.......0x%x\r\n"), newvol));
+			}
+		}
+		break;
+	case VK_RIGHT:
+		{
+			waveOutGetVolume(0, &sysvol);
+			newvol = (sysvol & 0xF);
+			if(newvol < 0xc)
+			{
+				newvol = newvol + 3;
+				newvol = (newvol << 28)|(newvol << 24)|(newvol << 20)|(newvol << 16)|(newvol << 12)|(newvol << 8)|(newvol << 4)|newvol;
+				waveOutSetVolume(0, newvol);
+				RETAILMSG(1, (TEXT("VK_RIGHT.......0x%x\r\n"), newvol));
+			}
+		}
+		break;
 	case VK_F24:
 	case VK_ESCAPE:
+#if FOR_DAMEI_VERSION
+#else
 		{
-			
 			//SetDevicePower(L"BKL1:", POWER_NAME, D0);
 			if(g_bBKLOff)
 			{
@@ -420,6 +459,7 @@ LRESULT DoKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 				g_bBKLOff = TRUE;
 			}
 		}
+#endif
 		break;
 	case VK_PAUSE:
 		PlayPauseMedia();
@@ -434,7 +474,31 @@ LRESULT DoSysKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 	RETAILMSG(1, (TEXT("WM_SYSKEYDOWN.......\r\n")));
 	if (wParam == VK_MENU)
 	{
+#if FOR_DAMEI_VERSION
+		//SetDevicePower(L"BKL1:", POWER_NAME, D0);
+		if(g_bBKLOff)
+		{
+			CEDEVICE_POWER_STATE off = D0;
+			if (g_hBkLight && g_bBKLOff)
+			{
+				RETAILMSG(1, (L"backlight->on\r\n"));
+				//DeviceIoControl(g_hBkLight, IOCTL_POWER_SET, NULL, 0, &off, sizeof(CEDEVICE_POWER_STATE), NULL, NULL);
+			}
+			g_bBKLOff = FALSE;
+		}
+		else
+		{
+			CEDEVICE_POWER_STATE off = D4;
+			if (g_hBkLight && (!g_bBKLOff))
+			{
+				RETAILMSG(1, (L"backlight->off\r\n"));
+				//DeviceIoControl(g_hBkLight, IOCTL_POWER_SET, NULL, 0, &off, sizeof(CEDEVICE_POWER_STATE), NULL, NULL);
+			}
+			g_bBKLOff = TRUE;
+		}
+#else
 		DialogBox(hInst, (LPCTSTR)IDD_SETUP, hWnd, (DLGPROC)SetupDlgProc);
+#endif
 	}
 	return 0;
 }
@@ -561,12 +625,30 @@ HFONT CreateFont(LONG fHeight,LONG fWidth, LONG fEscapement, LONG fOrientation, 
 
 void MediaScan(HWND hWnd)
 {
-	FindPictures();
-	FindMediaFiles();
+	WIN32_FIND_DATA wfd;
+
+	HANDLE hFind = FindFirstFile(TEXT("USB Disk"), &wfd);
+	if (hFind != INVALID_HANDLE_VALUE)
+	{
+		FindPictures(0);
+		FindMediaFiles(0);
+	}
+	else{
+		hFind = FindFirstFile(TEXT("USB Disk2"), &wfd);
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			FindPictures(1);
+			FindMediaFiles(1);
+		}
+	}
+
 	g_MediaScanIsDone = TRUE;
 	RECT rcClient;
 	GetClientRect(hWnd, &rcClient);
 	InvalidateRect(hWnd, &rcClient, FALSE);
+#if FOR_DAMEI_VERSION
+	PlayPauseMedia();
+#endif
 }
 
 void USBDetect(HWND hWnd)

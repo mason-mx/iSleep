@@ -45,4 +45,5 @@ struct PICTURE_LIST_ITEM {
 
 // function for invoking externally
 bool NextImage();
+bool RandomImage();
 bool PreviousImage();

@@ -25,6 +25,7 @@ Revision History:
 #endif // DEBUG
 
 #define DEAFULT_MEDIA_LOCATION TEXT("USB Disk\\MEDIA\\")
+#define DEAFULT_MEDIA_LOCATION2 TEXT("USB Disk2\\MEDIA\\")
 
 //
 // macro definitions
@@ -62,7 +63,7 @@ CCoImage g_uiImages;
 MP3ID3V1TAG g_mp3Tag[1] = {0};
 
 UINT g_nRepeatMode = 2;
-bool g_bShuffle = false;
+bool g_bShuffle = true;
 bool g_bShowList = true;
 UINT g_nVideoMode = 0;
 
@@ -776,9 +777,16 @@ UINT SearchMediaFiles(wchar_t *lpwszPath, MEDIA_LIST_ITEM **lppItem)
 	return (nCount+1);
 }
 
-UINT FindMediaFiles()
+UINT FindMediaFiles(int index)
 {	
-	g_nItems = SearchMediaFiles(DEAFULT_MEDIA_LOCATION, &g_lpItems);
+	if(index == 0)
+	{
+		g_nItems = SearchMediaFiles(DEAFULT_MEDIA_LOCATION, &g_lpItems);
+	}
+	else if(index == 1)//USB DISK2
+	{
+		g_nItems = SearchMediaFiles(DEAFULT_MEDIA_LOCATION2, &g_lpItems);
+	}
 	bMediaScanIsDone = TRUE;
 	RECT rcClient;
 	GetClientRect(g_hMPWnd, &rcClient);

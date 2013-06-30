@@ -53,7 +53,8 @@ Revision History:
 // top y coordinate of the thumbnails display area
 #define THB_TOP (TITLE_BAR_HEIGHT+(PV_WIN_HEIGHT-TITLE_BAR_HEIGHT-MENU_BAR_HEIGHT-(THB_VITEMS*(THB_HEIGHT+THB_VSPACE)-THB_VSPACE))/2)
 
-#define DEAFULT_PICTURE_LOCATION TEXT("USB Disk\\PICTURE\\")
+#define DEAFULT_PICTURE_LOCATION TEXT("USB Disk\\IMG\\")
+#define DEAFULT_PICTURE_LOCATION2 TEXT("USB Disk2\\IMG\\")
 
 #define PNG_IMAGE_UNDERLINE TEXT("USB Disk\\Resource\\APictureViewer\\underline.png") 
 #define PNG_IMAGE_PREVIOUS TEXT("USB Disk\\Resource\\APictureViewer\\previous.png") 
@@ -289,7 +290,7 @@ LRESULT CALLBACK PVWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
 //
 LRESULT OnWndCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	SetTimer(hWnd, IDT_TIMER1,5000,(TIMERPROC) NULL);
+	SetTimer(hWnd, IDT_TIMER1, 5000, (TIMERPROC) NULL);
 	return 0;
 }
 
@@ -579,9 +580,16 @@ UINT SearchPictureFiles(wchar_t *lpwszPath, PICTURE_LIST_ITEM **lppItem)
 	return (nCount+1);
 }
 
-UINT FindPictures()
+UINT FindPictures(int index)
 {	
-	g_nTotalItems = SearchPictureFiles(DEAFULT_PICTURE_LOCATION, &g_lpItem);
+	if(index == 0)
+	{
+		g_nTotalItems = SearchPictureFiles(DEAFULT_PICTURE_LOCATION, &g_lpItem);
+	}
+	else if(index == 1)//USB DISK2
+	{
+		g_nTotalItems = SearchPictureFiles(DEAFULT_PICTURE_LOCATION2, &g_lpItem);
+	}
 	bPictureScanIsDone = TRUE;
 	RECT rcClient;
 	GetClientRect(g_hWnd, &rcClient);
@@ -610,6 +618,20 @@ bool PictureTypeFilter(wchar_t *lpwszFile)
 	}
 
 	return false;
+}
+
+bool RandomImage()
+{
+	if (g_nCurItem < g_nTotalItems)
+	{
+		g_nCurItem = rand()%g_nTotalItems;		
+	}
+	else //impossible
+	{
+		g_nCurItem = 0;
+	}
+	SetFilePath(g_lpItem[g_nCurItem].wszPath);
+	return true;
 }
 
 bool NextImage()
