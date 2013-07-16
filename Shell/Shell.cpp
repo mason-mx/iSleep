@@ -28,6 +28,7 @@ WORD iMonth;
 WORD iDay;
 
 HANDLE g_hBkLight;
+HANDLE g_Event;
 BOOL g_bBKLOff = FALSE;
 BOOL g_MediaScanIsDone = FALSE;
 
@@ -46,8 +47,9 @@ BOOL			InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
-void MediaScan(HWND);
+void MediaScan();
 void USBDetect(HWND);
+void MediaScanDoneNotify(HWND);
 
 const struct decodeUINT ShellMessages[] = {
     WM_CREATE, DoCreateShell,
@@ -139,6 +141,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING); 
     LoadString(hInstance, IDC_SHELL, szWindowClass, MAX_LOADSTRING);
+
+	g_Event = CreateEvent(NULL, FALSE, FALSE, NULL);
+	CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)MediaScan, NULL, 0, NULL);
 	
 	TIME_ZONE_INFORMATION tziNew;
 	ZeroMemory(&tziNew, sizeof(tziNew));
@@ -228,8 +233,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
-	USBDetect(hWnd);
-	CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)MediaScan, hWnd, 0, NULL);
+	
+	//USBDetect(hWnd);
+	CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)MediaScanDoneNotify, hWnd, 0, NULL);
+	
 
 #ifndef SHELL_AYGSHELL
     if (g_hWndCommandBar)
@@ -272,7 +279,7 @@ LRESULT DoCreateShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 	HWND hWndTW = NULL;
 	//To Hide Task bar
 	HWND hStatusBar=FindWindow(TEXT("HHTaskBar"),NULL);
-	ShowWindow(hStatusBar,SW_SHOW);
+	ShowWindow(hStatusBar,SW_HIDE);
 #if !FOR_DAMEI_VERSION
 	if((IDOK == DialogBox(hInst, (LPCTSTR)IDD_TST, hWnd, (DLGPROC)TSTDlgProc))&&
 		(IDOK == DialogBox(hInst, (LPCTSTR)IDD_SD, hWnd, (DLGPROC)SDDlgProc))&&
@@ -510,13 +517,14 @@ LRESULT DoDeviceChangeShell( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam 
         { 
                 switch( wParam ) 
                 { 
-                case DBT_DEVICEARRIVAL: // USB存储设备插入 
-                        RETAILMSG(1, (TEXT( "USBDisk%c is inserted\n"), dbvDev->dbcv_name[0])); 
-						CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)MediaScan, hWnd, 0, NULL);
-                        break; 
-                case DBT_DEVICEREMOVECOMPLETE: // USB存储设备移出 
-                        RETAILMSG( 1, (TEXT( "USBDisk%c is remove\n"), dbvDev->dbcv_name[0] )); 
-                        break; 
+                	case DBT_DEVICEARRIVAL: // USB存储设备插入 
+				RETAILMSG(1, (TEXT( "USBDisk%c is inserted\n"), dbvDev->dbcv_name[0])); 
+				CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)MediaScan, NULL, 0, NULL);
+				CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)MediaScanDoneNotify, hWnd, 0, NULL);
+				break; 
+                	case DBT_DEVICEREMOVECOMPLETE: // USB存储设备移出 
+                       	RETAILMSG( 1, (TEXT( "USBDisk%c is remove\n"), dbvDev->dbcv_name[0] )); 
+                        	break; 
                 } 
         } 
 
@@ -529,6 +537,7 @@ LRESULT DoDestroyShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 	ShowWindow(hStatusBar,SW_SHOW);
 
 	CloseHandle(g_hBkLight);
+	CloseHandle(g_Event);
 
 #ifndef SHELL_AYGSHELL
 	CommandBar_Destroy(g_hWndCommandBar);
@@ -623,7 +632,7 @@ HFONT CreateFont(LONG fHeight,LONG fWidth, LONG fEscapement, LONG fOrientation, 
 	return CreateFontIndirect(&lf);
 }
 
-void MediaScan(HWND hWnd)
+void MediaScan()
 {
 	WIN32_FIND_DATA wfd;
 
@@ -643,12 +652,32 @@ void MediaScan(HWND hWnd)
 	}
 
 	g_MediaScanIsDone = TRUE;
-	RECT rcClient;
-	GetClientRect(hWnd, &rcClient);
-	InvalidateRect(hWnd, &rcClient, FALSE);
+	SetEvent(g_Event);
+
 #if FOR_DAMEI_VERSION
 	PlayPauseMedia();
 #endif
+}
+
+void MediaScanDoneNotify(HWND hWnd)
+{
+	if(g_MediaScanIsDone)
+	{
+		RECT rcClient;
+		GetClientRect(hWnd, &rcClient);
+		InvalidateRect(hWnd, &rcClient, FALSE);
+		RETAILMSG(1, (TEXT("MediaScan is Done, Refresh Main Shell\r\n")));
+	}
+	else
+	{
+		if(WaitForSingleObject(g_Event, INFINITE) == WAIT_OBJECT_0)
+		{
+			RECT rcClient;
+			GetClientRect(hWnd, &rcClient);
+			InvalidateRect(hWnd, &rcClient, FALSE);
+			RETAILMSG(1, (TEXT("Get MediaScan Done notify, Refresh Main Shell\r\n")));
+		}
+	}
 }
 
 void USBDetect(HWND hWnd)

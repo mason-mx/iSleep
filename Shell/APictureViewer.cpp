@@ -65,6 +65,9 @@ Revision History:
 // global variables
 //
 extern HINSTANCE hInst;
+#if FOR_DAMEI_VERSION
+extern HANDLE g_Event;
+#endif
 HWND g_hWnd = NULL;
 
 BOOL bPictureScanIsDone = FALSE;
@@ -100,6 +103,10 @@ LRESULT CALLBACK PVWndProc(HWND, UINT, WPARAM, LPARAM);
 void GetThumbnailRect(UINT nItem, RECT *lprc);
 UINT SearchPictureFiles(wchar_t *lpwszPath, PICTURE_LIST_ITEM **lppItem);
 bool PictureTypeFilter(wchar_t *lpwszFile);
+
+#if FOR_DAMEI_VERSION
+void MediaScanDoneNotifyFS(HWND);
+#endif
 
 //
 // message handler
@@ -194,7 +201,9 @@ BOOL ShowPVWnd(HWND hWnd)
 
 BOOL ShowFSWnd(HWND hWnd)
 {
+#if !FOR_DAMEI_VERSION
 	SetFilePath(g_lpItem[g_nCurItem].wszPath);
+#endif
 
 	int cx = GetSystemMetrics(SM_CXSCREEN);
 	int cy = GetSystemMetrics(SM_CYSCREEN);
@@ -205,6 +214,10 @@ BOOL ShowFSWnd(HWND hWnd)
 
 	HWND hWndView = CreateFullScreenViewWindow(pt.x, pt.y, cx, cy, hWnd, hInst);
 	ShowWindow(hWndView, SW_SHOW);
+
+#if FOR_DAMEI_VERSION
+	CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)MediaScanDoneNotifyFS, hWndView, 0, NULL);
+#endif
 	return 1;
 }
 //
@@ -657,3 +670,18 @@ bool PreviousImage()
 
 	return false;
 }
+
+#if FOR_DAMEI_VERSION
+void MediaScanDoneNotifyFS(HWND hWnd)
+{
+	if(WaitForSingleObject(g_Event, INFINITE) == WAIT_OBJECT_0)
+	{
+		RandomImage();
+		RECT rcClient;
+		GetClientRect(hWnd, &rcClient);
+		InvalidateRect(hWnd, &rcClient, TRUE);
+		RETAILMSG(1,(TEXT("MediaScan is Done, Refresh Full Screen\r\n")));
+		SetEvent(g_Event);//To notify main shell window to refresh screen
+	}
+}
+#endif

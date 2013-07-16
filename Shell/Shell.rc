@@ -259,7 +259,7 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
-
+#if FOR_DAMEI_VERSION
 /////////////////////////////////////////////////////////////////////////////
 //
 // Bitmap
@@ -269,6 +269,7 @@ IDB_BITMAP1             BITMAP                  "alert.bmp"
 IDB_BLUE_DATE           BITMAP                  "blue date.bmp"
 IDB_BLUE_CLOCK_FACE     BITMAP                  "blue clockface.bmp"
 IDB_BLUE_CLOCK_FACE2    BITMAP                  "blue clockface_big.bmp"
+#endif
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

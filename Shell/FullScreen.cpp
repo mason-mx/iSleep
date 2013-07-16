@@ -136,7 +136,7 @@ LRESULT CALLBACK FullScreenViewWndProc(HWND hWnd, UINT message, WPARAM wParam, L
 //
 LRESULT OnFullScreenViewWndCreate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	SetTimer(hWnd, IDT_TIMER1,5000,(TIMERPROC) NULL);
+	SetTimer(hWnd, IDT_TIMER1,600000,(TIMERPROC) NULL);
 	return 0;
 }
 
