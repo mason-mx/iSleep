@@ -637,7 +637,7 @@ bool RandomImage()
 {
 	if (g_nCurItem < g_nTotalItems)
 	{
-		g_nCurItem = rand()%g_nTotalItems;		
+		g_nCurItem ++;//= rand()%g_nTotalItems;		
 	}
 	else //impossible
 	{

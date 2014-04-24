@@ -48,6 +48,7 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
 void MediaScan();
+void PlayNextMediaFolder();
 void USBDetect(HWND);
 void MediaScanDoneNotify(HWND);
 
@@ -141,6 +142,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING); 
     LoadString(hInstance, IDC_SHELL, szWindowClass, MAX_LOADSTRING);
+	waveOutSetVolume(0, 0x66666666);
 
 	g_Event = CreateEvent(NULL, FALSE, FALSE, NULL);
 	CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)MediaScan, NULL, 0, NULL);
@@ -395,7 +397,7 @@ LRESULT DoKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
 	RETAILMSG(1, (TEXT("WM_KEYDOWN.......0x%x\r\n"), wParam));
 	PlaySound(NULL, NULL, 0);
-	if((wParam != VK_F24) && (wParam != VK_ESCAPE))
+	/*if((wParam != VK_F24) && (wParam != VK_ESCAPE))
 	{
 		CEDEVICE_POWER_STATE off = D0;
 		if (g_hBkLight && (g_bBKLOff))
@@ -403,7 +405,7 @@ LRESULT DoKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 			//DeviceIoControl(g_hBkLight, IOCTL_POWER_SET, NULL, 0, &off, sizeof(CEDEVICE_POWER_STATE), NULL, NULL);
 		}
 		g_bBKLOff = FALSE;
-	}
+	}*/
 
 	DWORD sysvol, newvol = 0;
 	
@@ -430,7 +432,7 @@ LRESULT DoKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 		{
 			waveOutGetVolume(0, &sysvol);
 			newvol = (sysvol & 0xF);
-			if(newvol < 0xc)
+			if(newvol < 0x9)
 			{
 				newvol = newvol + 3;
 				newvol = (newvol << 28)|(newvol << 24)|(newvol << 20)|(newvol << 16)|(newvol << 12)|(newvol << 8)|(newvol << 4)|newvol;
@@ -440,9 +442,16 @@ LRESULT DoKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	case VK_F24:
+		RETAILMSG(1, (TEXT("VK_F24.......\r\n")));
+		break;
 	case VK_ESCAPE:
-#if FOR_DAMEI_VERSION
-#else
+		RETAILMSG(1, (TEXT("VK_ESCAPE.......\r\n")));
+		//PostMessage(hWnd, WM_DESTROY, 0, 0);
+		//PlayNextFolder();
+		PlayNextMediaFolder();
+		break;
+#if 0
+//#else
 		{
 			//SetDevicePower(L"BKL1:", POWER_NAME, D0);
 			if(g_bBKLOff)
@@ -466,8 +475,9 @@ LRESULT DoKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 				g_bBKLOff = TRUE;
 			}
 		}
-#endif
+
 		break;
+#endif
 	case VK_PAUSE:
 		PlayPauseMedia();
 		break;
@@ -482,27 +492,8 @@ LRESULT DoSysKeyDownShell(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 	if (wParam == VK_MENU)
 	{
 #if FOR_DAMEI_VERSION
-		//SetDevicePower(L"BKL1:", POWER_NAME, D0);
-		if(g_bBKLOff)
-		{
-			CEDEVICE_POWER_STATE off = D0;
-			if (g_hBkLight && g_bBKLOff)
-			{
-				RETAILMSG(1, (L"backlight->on\r\n"));
-				//DeviceIoControl(g_hBkLight, IOCTL_POWER_SET, NULL, 0, &off, sizeof(CEDEVICE_POWER_STATE), NULL, NULL);
-			}
-			g_bBKLOff = FALSE;
-		}
-		else
-		{
-			CEDEVICE_POWER_STATE off = D4;
-			if (g_hBkLight && (!g_bBKLOff))
-			{
-				RETAILMSG(1, (L"backlight->off\r\n"));
-				//DeviceIoControl(g_hBkLight, IOCTL_POWER_SET, NULL, 0, &off, sizeof(CEDEVICE_POWER_STATE), NULL, NULL);
-			}
-			g_bBKLOff = TRUE;
-		}
+		SetDevicePower(L"BKL1:", POWER_NAME, D0);
+		PostMessage(hWnd, WM_DESTROY, 0, 0);
 #else
 		DialogBox(hInst, (LPCTSTR)IDD_SETUP, hWnd, (DLGPROC)SetupDlgProc);
 #endif
@@ -635,27 +626,44 @@ HFONT CreateFont(LONG fHeight,LONG fWidth, LONG fEscapement, LONG fOrientation, 
 void MediaScan()
 {
 	WIN32_FIND_DATA wfd;
+	UINT nPics = 0;
 
 	HANDLE hFind = FindFirstFile(TEXT("USB Disk"), &wfd);
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
-		FindPictures(0);
+		nPics = FindPictures(0);
 		FindMediaFiles(0);
 	}
 	else{
 		hFind = FindFirstFile(TEXT("USB Disk2"), &wfd);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
-			FindPictures(1);
+			nPics = FindPictures(1);
 			FindMediaFiles(1);
 		}
 	}
+	
+	g_MediaScanIsDone = TRUE;
+	SetEvent(g_Event);
+	if(nPics <= 0)
+	{
+		SetDevicePower(L"BKL1:", POWER_NAME, D4);
+	}
+
+#if FOR_DAMEI_VERSION
+	PlayPauseMedia();
+#endif
+}
+
+void PlayNextMediaFolder()
+{
+	ReFindMediaFiles();
 
 	g_MediaScanIsDone = TRUE;
 	SetEvent(g_Event);
 
 #if FOR_DAMEI_VERSION
-	PlayPauseMedia();
+	RePlayMedia();
 #endif
 }
 

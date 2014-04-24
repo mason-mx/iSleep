@@ -63,15 +63,18 @@ CCoImage g_uiImages;
 MP3ID3V1TAG g_mp3Tag[1] = {0};
 
 UINT g_nRepeatMode = 2;
-bool g_bShuffle = true;
+bool g_bShuffle = false;
 bool g_bShowList = true;
 UINT g_nVideoMode = 0;
 
 BOOL bMediaScanIsDone = FALSE;
 
+UINT g_nFolders = 0; // number of Media files
+UINT g_nCurFolders = 0; // current item
 UINT g_nItems = 0; // number of Media files
 UINT g_nCurItems = 0; // current item
 MEDIA_LIST_ITEM *g_lpItems = NULL; // Media list
+MEDIA_LIST_ITEM *g_lpFolders = NULL; // Media list
 
 // playing control item identifier
 enum enumPlayingControlID {
@@ -730,6 +733,8 @@ UINT SearchMediaFiles(wchar_t *lpwszPath, MEDIA_LIST_ITEM **lppItem)
 	wcscpy(wszPath, lpwszPath);
 	wcscat(wszPath, L"*.*");
 
+	RETAILMSG(1, (L"Directory %s\r\n", wszPath));
+
 	HANDLE hFind = FindFirstFile(wszPath, &wfd);
 	if (hFind == INVALID_HANDLE_VALUE)
 	{
@@ -777,15 +782,231 @@ UINT SearchMediaFiles(wchar_t *lpwszPath, MEDIA_LIST_ITEM **lppItem)
 	return (nCount+1);
 }
 
+void FindFileInDir(wchar_t* rootDir, MEDIA_LIST_ITEM **lppItem /*g_lpFolders*/)
+{
+	wchar_t fname[256];
+	int nCount = -1;
+	MEDIA_LIST_ITEM *lpItem = NULL;
+	ZeroMemory(fname, 256);
+	WIN32_FIND_DATA fd;
+	ZeroMemory(&fd, sizeof(WIN32_FIND_DATA));
+	HANDLE hSearch;
+	wchar_t filePathName[256];
+	wchar_t tmpPath[256];
+	ZeroMemory(filePathName, 256);
+	ZeroMemory(tmpPath, 256);
+
+	wcscpy(filePathName, rootDir);
+	BOOL bSearchFinished = FALSE;
+
+	RETAILMSG(1, (L"ROOT %s\r\n", filePathName));
+
+	if( filePathName[wcslen(filePathName) -1] != '\\' )
+	{
+		wcscat(filePathName, L"\\");
+	}
+	wcscat(filePathName, L"*");
+	hSearch = FindFirstFile(filePathName, &fd);
+
+	//Is directory
+
+	if( (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && wcscmp(fd.cFileName, L".") && wcscmp(fd.cFileName, L"..") )       
+	{
+		wcscpy(tmpPath, rootDir);
+		wcscat(tmpPath, L"\\");
+		wcscat(tmpPath, fd.cFileName);
+		FindFileInDir(tmpPath, lppItem);
+		RETAILMSG(1, (L"Folder 11111 %s\r\n", tmpPath));
+	}
+	else if( wcscmp(fd.cFileName, L".") && wcscmp(fd.cFileName, L"..") )
+	{
+		swprintf(fname, L"%-50.50s", fd.cFileName);
+		//RETAILMSG(1, (L"Folder %s\r\n", fd.cFileName));
+		/*nCount = 0;
+		lpItem = new MEDIA_LIST_ITEM[1];
+		lpItem->nIndex = nCount;
+		wcscpy(lpItem[lpItem->nIndex ].wszName, fd.cFileName);
+		wcscpy(lpItem[lpItem->nIndex ].wszPath, filePathName);
+		wcscat(lpItem[lpItem->nIndex ].wszPath, fd.cFileName);
+		RETAILMSG(1, (L"Folder [%d] %s\r\n", nCount, lpItem[lpItem->nIndex].wszName));
+		strcat(strRet + strRet[strlen(strRet)] , fname);*/
+	}
+
+	while( !bSearchFinished )
+	{
+		if( FindNextFile(hSearch, &fd) )
+		{
+			if( (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && wcscmp(fd.cFileName, L".") && wcscmp(fd.cFileName, L"..") )       
+			{
+				wcscpy(tmpPath, rootDir);
+				wcscat(tmpPath, L"\\");
+				wcscat(tmpPath, fd.cFileName);
+				FindFileInDir(tmpPath, lppItem);
+				RETAILMSG(1, (L"Folder3333 %s\r\n", tmpPath));
+			}
+			else if( wcscmp(fd.cFileName, L".") && wcscmp(fd.cFileName, L"..") )
+			{
+				swprintf(fname, L"%-50.50s", fd.cFileName);
+				//RETAILMSG(1, (L"Folder2222 %s\r\n", fd.cFileName));
+				//strcat(strRet + strRet[strlen(strRet)] , fname);
+			}
+		}
+		else
+		{
+			if( GetLastError() == ERROR_NO_MORE_FILES )          //Normal Finished
+			{
+				bSearchFinished = TRUE;
+			}
+			else
+				bSearchFinished = TRUE;     //Terminate Search
+		}
+
+	}
+
+	FindClose(hSearch);
+}
+
+UINT FindSubFolders(wchar_t* rootDir, MEDIA_LIST_ITEM **lppItem /*g_lpFolders*/)
+{
+	wchar_t fname[256];
+	int nCount = -1;
+	MEDIA_LIST_ITEM *lpItem = NULL;
+	ZeroMemory(fname, 256);
+	WIN32_FIND_DATA fd;
+	ZeroMemory(&fd, sizeof(WIN32_FIND_DATA));
+	HANDLE hSearch;
+	wchar_t filePathName[256]; 
+	wchar_t tmpPath[256];
+	ZeroMemory(filePathName, 256);
+	ZeroMemory(tmpPath, 256);
+
+	wcscpy(filePathName, rootDir);
+	BOOL bSearchFinished = FALSE;
+
+	RETAILMSG(1, (L"ROOT%s\r\n", filePathName));
+
+	if( filePathName[wcslen(filePathName) -1] != '\\' )
+	{
+		wcscat(filePathName, L"\\");
+	}
+	wcscat(filePathName, L"*");
+	hSearch = FindFirstFile(filePathName, &fd);
+
+	//Is directory
+
+	if( (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && wcscmp(fd.cFileName, L".") && wcscmp(fd.cFileName, L"..") )       
+	{
+		wcscpy(tmpPath, rootDir);
+		wcscat(tmpPath, L"\\");
+		wcscat(tmpPath, fd.cFileName);
+		wcscat(tmpPath, L"\\");
+		//FindFileInDir(tmpPath, lppItem);
+		nCount = 0;
+		lpItem = new MEDIA_LIST_ITEM[1];
+		lpItem->nIndex = nCount;
+		wcscpy(lpItem[lpItem->nIndex ].wszName, fd.cFileName);
+		wcscpy(lpItem[lpItem->nIndex ].wszPath, tmpPath);
+		RETAILMSG(1, (L"Folder 11111 %s\r\n", tmpPath));
+	}
+
+	while( !bSearchFinished )
+	{
+		if( FindNextFile(hSearch, &fd) )
+		{
+			if( (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && wcscmp(fd.cFileName, L".") && wcscmp(fd.cFileName, L"..") )       
+			{
+				MEDIA_LIST_ITEM *lpTemp = new MEDIA_LIST_ITEM[nCount+1];
+
+				wcscpy(tmpPath, rootDir);
+				wcscat(tmpPath, L"\\");
+				wcscat(tmpPath, fd.cFileName);
+				wcscat(tmpPath, L"\\");
+				//FindFileInDir(tmpPath, lppItem);
+				memcpy(lpTemp, lpItem, (nCount+1)*sizeof(MEDIA_LIST_ITEM));
+
+				nCount += 1;
+				delete []lpItem;
+
+				lpItem = new MEDIA_LIST_ITEM[nCount+1];
+				memcpy(lpItem, lpTemp, nCount*sizeof(MEDIA_LIST_ITEM));
+				delete []lpTemp;
+
+				lpItem->nIndex = nCount;
+				wcscpy(lpItem[lpItem->nIndex].wszName, fd.cFileName);
+				wcscpy(lpItem[lpItem->nIndex].wszPath, tmpPath);
+				RETAILMSG(1, (L"Folder3333 %s\r\n", tmpPath));
+			}
+		}
+		else
+		{
+			if( GetLastError() == ERROR_NO_MORE_FILES )          //Normal Finished
+			{
+				bSearchFinished = TRUE;
+			}
+			else
+				bSearchFinished = TRUE;     //Terminate Search
+		}
+
+	}
+
+	*lppItem = lpItem;
+	FindClose(hSearch);
+	return (nCount+1);
+}
+
+UINT ReFindMediaFiles()
+{
+	UINT i;
+	//for(i = 0; i < g_nItems; i ++)
+	//{
+		//free(&g_lpItems[i]);
+		//delete [](g_lpItems[i]);
+	//}
+	g_lpItems = NULL;
+	g_nCurItems = 0;
+	i = g_nCurFolders + 1;
+
+	while(1)
+	{
+		if(i >= g_nFolders) i = 0;
+		g_nItems = SearchMediaFiles(g_lpFolders[i].wszPath, &g_lpItems);
+		if(g_nItems > 0)
+		{
+			g_nCurFolders = i;
+			break;
+		}
+		i ++;
+		
+	}
+	bMediaScanIsDone = TRUE;
+	RECT rcClient;
+	GetClientRect(g_hMPWnd, &rcClient);
+	InvalidateRect(g_hMPWnd, &rcClient, FALSE);
+	return g_nItems;
+}
+
 UINT FindMediaFiles(int index)
-{	
+{
+	UINT i = 0;
 	if(index == 0)
 	{
-		g_nItems = SearchMediaFiles(DEAFULT_MEDIA_LOCATION, &g_lpItems);
+		g_nFolders = FindSubFolders(L"USB DISK", &g_lpFolders);
 	}
 	else if(index == 1)//USB DISK2
 	{
-		g_nItems = SearchMediaFiles(DEAFULT_MEDIA_LOCATION2, &g_lpItems);
+		g_nFolders = FindSubFolders(L"USB DISK2", &g_lpFolders);
+	}
+	RETAILMSG(1, (TEXT("Subfolders = %d\r\n"), g_nFolders));
+	if(g_nFolders == 0) return 0;
+	while(i < g_nFolders)
+	{
+		g_nItems = SearchMediaFiles(g_lpFolders[i].wszPath, &g_lpItems);
+		if(g_nItems > 0)
+		{
+			g_nCurFolders = i;
+			break;
+		}
+		i ++;
 	}
 	bMediaScanIsDone = TRUE;
 	RECT rcClient;
@@ -947,6 +1168,7 @@ void PlayPauseMedia()
 	else
 	{
 		int nIndex = PlayListCurrent();
+		RETAILMSG(1, (TEXT("nIndex = %d\r\n"), nIndex));
 		if (nIndex == -1)
 		{
 			nIndex = PlayListNext(g_nRepeatMode, g_bShuffle);
@@ -999,3 +1221,33 @@ void PlayMedia()
 		}
 	}
 }
+
+void RePlayMedia()
+{
+	if(!bMediaScanIsDone)
+		return;
+#if 0
+	if (g_mediaPlay.GetPlayState() == psPause)
+	{
+		g_mediaPlay.Play();
+	}
+	else if (g_mediaPlay.GetPlayState() == psPlaying)
+	{
+		; //Do nothing
+	}
+	else
+	{
+#endif
+		int nIndex = PlayListCurrent();
+		if (nIndex == -1)
+		{
+			nIndex = PlayListNext(g_nRepeatMode, g_bShuffle);
+		}
+
+		if (nIndex >= 0)
+		{
+			PlayMediaFile(GetMediaFilePath(nIndex));
+		}
+//	}
+}
+
